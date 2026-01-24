@@ -1,0 +1,199 @@
+{
+  "name": "LinkedIn Event",
+  "nodes": [
+    {
+      "parameters": {
+        "person": "xZ2PRAMieH",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -336
+      ],
+      "id": "c0866e1c-3220-48c7-afb9-d391d949aa1f",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "vJyZBydjuZUjU6do",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "LinkedIn Content Generator",
+        "formDescription": "Wklej dowolny adres URL (Meetup, artykuł, strona wydarzenia). System automatycznie pobierze dane, przeanalizuje treść i przygotuje post w języku angielskim.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Event URL",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        -336
+      ],
+      "id": "e179d990-94f2-44f9-a724-69d65478a720",
+      "name": "On form submission",
+      "webhookId": "627132ef-df65-41ed-a2e3-1addb8a8785b",
+      "executeOnce": false,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://browserless:3000/content",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json[\"Event URL\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -288,
+        -336
+      ],
+      "id": "13ec2071-e290-4795-8b07-c862137e3be4",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "page_content",
+              "cssSelector": "body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -336
+      ],
+      "id": "56f5ad33-c060-4e7f-90db-bb2520a5edfd",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemma-3-27b-it",
+          "mode": "list",
+          "cachedResultName": "models/gemma-3-27b-it"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Act as a professional LinkedIn Ghostwriter. I have just attended an event, and I want to share a technical summary.\n\nSOURCE TEXT TO ANALYZE:\n{{ $json.page_content }}\n\nYOUR TASKS:\n1. EXTRACT: Find the Event Name and the Organizer's Name from the text.\n2. CONTEXT: The event has ended. Write in the past tense.\n3. OPENING: Start with a thank you to the organizer for hosting such a great event.\n4. HIGHLIGHTS: Focus ONLY on the technical/educational value. List the specific presentations, lectures, or topics found in the text.\n5. EXCLUSIONS: Absolutely DO NOT mention pizza, catering, networking, or general intros. \n6. STYLE: Professional, English language, enthusiastic but technical.\n7. STRUCTURE:\n   - Hook (Thank you + Event Name)\n   - Bullet points of key technical topics/lectures\n   - Professional closing\n   - Hashtags based on the Organizer and the topics (e.g. #OrganizerName #Topic1 #Topic2)\n\nIMPORTANT: Return ONLY the post text. No introductory remarks. Do not use any markdown formatting like bold or italics. Post cannot exceed 3000 characters."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -336
+      ],
+      "id": "b76dc4b8-b6ae-4b3b-8900-01a0b02ae4f0",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "FP2TjMrhmxep72nV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "979a0208-1bbd-412d-b35f-4366c12438da",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"
+  },
+  "id": "F3sGu7Z7wvMJWImf",
+  "tags": []
+}

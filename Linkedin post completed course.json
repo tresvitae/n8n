@@ -1,0 +1,225 @@
+{
+  "name": "Linkedin post completed course",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e64948e7-6187-4004-b454-7bf109171e04",
+              "leftValue": "={{ $json[\"URL or fragment text\"] }}",
+              "rightValue": "=http",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        -32
+      ],
+      "id": "25755ffb-fa26-47ba-a66f-d9720bb34c8d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://browserless:3000/content",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "waitUntil",
+              "value": "networkidle0"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json[\"URL or fragment text\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        -128
+      ],
+      "id": "2eaf0fec-d871-4ff7-8983-676f1f89e06c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "page_content",
+              "cssSelector": "body",
+              "skipSelectors": "nav, footer, script, style, noscript, .cookie-banner, .header, .footer, .sidebar, .ads, svg, aside"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        -128
+      ],
+      "id": "5df88f56-2316-42c5-a232-1cdff8c035b1",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "formTitle": "LinkedIn Content With Certificate Generator",
+        "formDescription": "Publikacja Certyfikatu na LinkedIn",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "URL or fragment text"
+            },
+            {
+              "fieldLabel": "PDF Certificate",
+              "fieldType": "file",
+              "multipleFiles": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        -32
+      ],
+      "id": "0fd22fde-4eef-48e3-8eef-b9e6e57d277a",
+      "name": "On form submission",
+      "webhookId": "2d590737-8955-4c1a-91a4-98a2f0ee797e"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "={{ $json.page_content }}",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -16
+      ],
+      "id": "6dbe4587-b563-4aaa-81cc-f2407c5dee23",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "FP2TjMrhmxep72nV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6fe62411-c425-4eed-b8e0-63580cc2df6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"
+  },
+  "id": "2lq7pt4BNcxrXC2L",
+  "tags": []
+}

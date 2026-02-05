@@ -131,12 +131,15 @@
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "={{ $json.page_content }}",
-          "mode": "id"
+          "value": "models/gemini-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-flash-latest"
         },
         "messages": {
           "values": [
-            {}
+            {
+              "content": "=Act as a professional LinkedIn Ghostwriter. I have just completed a certification course/event and I am attaching the certificate below.\n\nSOURCE TEXT TO ANALYZE:\n{{ $json.page_content || $json['URL or fragment text'] }}  \n\nYOUR TASKS:\n1. EXTRACT: Find the Course Name and the Organizer's Name from the text.\n2. CONTEXT: The training has ended. Write in the past tense.\n3. OPENING: Start with a thank you to the organizer for the opportunity to learn and for issuing the certification.\n4. HIGHLIGHTS: Focus ONLY on the technical/educational value. List specific skills, modules, or topics found in the text that are now confirmed by the attached certificate.\n5. EXCLUSIONS: Absolutely DO NOT mention pizza, catering, networking, or general intros. \n6. STYLE: Professional, English language, enthusiastic but technical.\n7. CTA: Mention that the official certificate is attached below as a PDF document.\n8. STRUCTURE:\n   - Hook (Thank you + Course/Event Name)\n   - Bullet points of key technical topics/lectures\n   - \"Certificate of completion attached below.\"\n   - Professional closing\n   - Hashtags based on the Organizer and the topics.\n\nIMPORTANT: Return ONLY the post text. No introductory remarks. Do not use any markdown formatting like bold or italics (LinkedIn doesn't support them natively). Post cannot exceed 3000 characters."
+            }
           ]
         },
         "options": {}
@@ -153,6 +156,26 @@
         "googlePalmApi": {
           "id": "FP2TjMrhmxep72nV",
           "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "xZ2PRAMieH",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -16
+      ],
+      "id": "ef1ff28c-aa38-4881-a3f2-2b6949e3d615",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "vJyZBydjuZUjU6do",
+          "name": "LinkedIn account"
         }
       }
     }
@@ -209,13 +232,24 @@
           }
         ]
       ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "6fe62411-c425-4eed-b8e0-63580cc2df6f",
+  "versionId": "feeb9bf0-6e7d-4317-a40f-6419b2ded0d9",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"

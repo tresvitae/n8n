@@ -109,9 +109,9 @@
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "models/gemini-2.5-pro",
+          "value": "models/gemini-flash-latest",
           "mode": "list",
-          "cachedResultName": "models/gemini-2.5-pro"
+          "cachedResultName": "models/gemini-flash-latest"
         },
         "messages": {
           "values": [
@@ -189,7 +189,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4b0dcdac-e657-4acf-8274-7f4a69038d82",
+  "versionId": "baa72839-5850-46d8-a47f-cf478ce6dfc3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"

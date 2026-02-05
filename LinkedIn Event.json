@@ -109,9 +109,9 @@
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "models/gemma-3-27b-it",
+          "value": "models/gemini-2.5-pro",
           "mode": "list",
-          "cachedResultName": "models/gemma-3-27b-it"
+          "cachedResultName": "models/gemini-2.5-pro"
         },
         "messages": {
           "values": [
@@ -189,7 +189,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "979a0208-1bbd-412d-b35f-4366c12438da",
+  "versionId": "4b0dcdac-e657-4acf-8274-7f4a69038d82",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"

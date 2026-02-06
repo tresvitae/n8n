@@ -19,6 +19,10 @@ services:
       - "3000:3000"
     environment:
       - MAX_CONCURRENT_SESSIONS=10
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "3001:3000"
 
 volumes:
   n8n_data:

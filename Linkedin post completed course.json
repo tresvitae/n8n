@@ -28,7 +28,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -16,
+        608,
         -32
       ],
       "id": "25755ffb-fa26-47ba-a66f-d9720bb34c8d",
@@ -70,7 +70,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        208,
+        832,
         -128
       ],
       "id": "2eaf0fec-d871-4ff7-8983-676f1f89e06c",
@@ -93,7 +93,7 @@
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
       "position": [
-        416,
+        1040,
         -128
       ],
       "id": "5df88f56-2316-42c5-a232-1cdff8c035b1",
@@ -109,7 +109,7 @@
               "fieldLabel": "URL or fragment text"
             },
             {
-              "fieldLabel": "PDF Certificate",
+              "fieldLabel": "pdf_certificate",
               "fieldType": "file",
               "multipleFiles": false
             }
@@ -138,7 +138,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Act as a professional LinkedIn Ghostwriter. I have just completed a certification course/event and I am attaching the certificate below.\n\nSOURCE TEXT TO ANALYZE:\n{{ $json.page_content || $json['URL or fragment text'] }}  \n\nYOUR TASKS:\n1. EXTRACT: Find the Course Name and the Organizer's Name from the text.\n2. CONTEXT: The training has ended. Write in the past tense.\n3. OPENING: Start with a thank you to the organizer for the opportunity to learn and for issuing the certification.\n4. HIGHLIGHTS: Focus ONLY on the technical/educational value. List specific skills, modules, or topics found in the text that are now confirmed by the attached certificate.\n5. EXCLUSIONS: Absolutely DO NOT mention pizza, catering, networking, or general intros. \n6. STYLE: Professional, English language, enthusiastic but technical.\n7. CTA: Mention that the official certificate is attached below as a PDF document.\n8. STRUCTURE:\n   - Hook (Thank you + Course/Event Name)\n   - Bullet points of key technical topics/lectures\n   - \"Certificate of completion attached below.\"\n   - Professional closing\n   - Hashtags based on the Organizer and the topics.\n\nIMPORTANT: Return ONLY the post text. No introductory remarks. Do not use any markdown formatting like bold or italics (LinkedIn doesn't support them natively). Post cannot exceed 3000 characters."
+              "content": "=Act as a professional LinkedIn Ghostwriter. I have just completed a certification course/event and I am attaching the certificate below.\n\nSOURCE TEXT TO ANALYZE:\n{{ $json.page_content || $json['URL or fragment text'] }}  \n\nYOUR TASKS:\n1. EXTRACT: Find the Course Name and the Organizer's Name from the text.\n2. CONTEXT: The training has ended. Write in the past tense.\n3. OPENING: Start with a thank you to the organizer for the opportunity to learn and for issuing the certification.\n4. HIGHLIGHTS: Focus ONLY on the technical/educational value. List specific skills, modules, or topics found in the text that are now confirmed by the attached certificate.\n5. EXCLUSIONS: Absolutely DO NOT mention pizza, catering, networking, or general intros. \n6. STYLE: Professional, English language, enthusiastic but technical.\n7. CTA: Mention that the official certificate is attached below.\n8. STRUCTURE:\n   - Hook (Thank you + Course/Event Name + Trainer Name)\n   - Bullet points of key technical topics/lectures\n   - \"Certificate of completion attached below.\"\n   - Professional closing\n   - Hashtags based on the Organizer and the topics.\n\nIMPORTANT: Return ONLY the post text with certification file. No introductory remarks. Do not use any markdown formatting like bold or italics (LinkedIn doesn't support them natively). Post cannot exceed 3000 characters."
             }
           ]
         },
@@ -147,7 +147,7 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        640,
+        1264,
         -16
       ],
       "id": "6dbe4587-b563-4aaa-81cc-f2407c5dee23",
@@ -161,14 +161,31 @@
     },
     {
       "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1616,
+        224
+      ],
+      "id": "c3c005a7-e8ea-4743-9db1-b6f5487f5c84",
+      "name": "Merge",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
         "person": "xZ2PRAMieH",
+        "text": "={{ $json.content.parts[0].text }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 1,
       "position": [
-        992,
-        -16
+        1792,
+        96
       ],
       "id": "ef1ff28c-aa38-4881-a3f2-2b6949e3d615",
       "name": "Create a post",
@@ -178,6 +195,119 @@
           "name": "LinkedIn account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://gotenberg:3000/forms/libreoffice/convert",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "format",
+              "value": "png"
+            },
+            {
+              "name": "width",
+              "value": "1280"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "files",
+              "value": "=data"
+            },
+            {
+              "name": "url",
+              "value": "file:///index.pdf"
+            },
+            {
+              "name": "files"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        800,
+        176
+      ],
+      "id": "927cde90-72b1-45c8-973c-cc2ba84a2743",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b69e5173-39e7-4370-bba6-567f6de9eee3",
+              "name": "data",
+              "value": "=pdf_certificate",
+              "type": "binary"
+            },
+            {
+              "id": "30d9f413-7a98-4c84-b23e-716a2cfc120a",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        176
+      ],
+      "id": "21c1e679-6281-4b75-9c61-8e86c23de094",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "67f58fce-f0fa-494c-a30a-7a4a48b06327",
+              "leftValue": "={{ $binary[\"pdf_certificate\"].mimeType }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        192,
+        336
+      ],
+      "id": "8460d2e7-2d2b-4798-8985-645fa7a69d19",
+      "name": "If1"
     }
   ],
   "pinData": {},
@@ -218,6 +348,11 @@
             "node": "If",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -237,9 +372,59 @@
       "main": [
         [
           {
-            "node": "Create a post",
+            "node": "Merge",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        []
+      ]
+    },
+    "Create a post": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
@@ -249,7 +434,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "feeb9bf0-6e7d-4317-a40f-6419b2ded0d9",
+  "versionId": "e2ba8167-9d14-4ef3-8112-a275f7b0e83a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"

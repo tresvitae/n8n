@@ -120,8 +120,8 @@
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.3,
       "position": [
-        -304,
-        -32
+        272,
+        128
       ],
       "id": "0fd22fde-4eef-48e3-8eef-b9e6e57d277a",
       "name": "On form submission",
@@ -168,8 +168,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1616,
-        224
+        1648,
+        240
       ],
       "id": "c3c005a7-e8ea-4743-9db1-b6f5487f5c84",
       "name": "Merge",
@@ -184,8 +184,8 @@
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 1,
       "position": [
-        1792,
-        96
+        1840,
+        240
       ],
       "id": "ef1ff28c-aa38-4881-a3f2-2b6949e3d615",
       "name": "Create a post",
@@ -199,50 +199,47 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://gotenberg:3000/forms/libreoffice/convert",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "format",
-              "value": "png"
-            },
-            {
-              "name": "width",
-              "value": "1280"
-            }
-          ]
-        },
+        "url": "http://stirling-pdf:8080/api/v1/convert/pdf/img",
         "sendBody": true,
         "contentType": "multipart-form-data",
         "bodyParameters": {
           "parameters": [
             {
-              "name": "files",
-              "value": "=data"
+              "name": "pageNumbers",
+              "value": "=1"
             },
             {
-              "name": "url",
-              "value": "file:///index.pdf"
+              "name": "imageFormat",
+              "value": "png"
             },
             {
-              "name": "files"
+              "name": "singleOrMultiple",
+              "value": "single"
+            },
+            {
+              "name": "colorType",
+              "value": "rgb"
+            },
+            {
+              "name": "dpi",
+              "value": "200"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "fileInput",
+              "inputDataFieldName": "data"
             }
           ]
         },
         "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
-            }
-          }
+          "allowUnauthorizedCerts": false
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        800,
-        176
+        1040,
+        144
       ],
       "id": "927cde90-72b1-45c8-973c-cc2ba84a2743",
       "name": "HTTP Request1"
@@ -256,25 +253,21 @@
               "name": "data",
               "value": "=pdf_certificate",
               "type": "binary"
-            },
-            {
-              "id": "30d9f413-7a98-4c84-b23e-716a2cfc120a",
-              "name": "",
-              "value": "",
-              "type": "string"
             }
           ]
         },
+        "includeOtherFields": true,
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        544,
-        176
+        848,
+        480
       ],
       "id": "21c1e679-6281-4b75-9c61-8e86c23de094",
-      "name": "Edit Fields"
+      "name": "Edit Fields",
+      "disabled": true
     },
     {
       "parameters": {
@@ -303,11 +296,25 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        192,
-        336
+        608,
+        304
       ],
       "id": "8460d2e7-2d2b-4798-8985-645fa7a69d19",
       "name": "If1"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Iterujemy przez wszystkie elementy wpadające do węzła\nfor item in _input.all():\n    \n    # Sprawdzamy, czy w danych binarnych istnieje plik 'pdf_certificate'\n    # (lub inna nazwa, którą masz w węźle Trigger/Formularz)\n    if 'pdf_certificate' in item.binary:\n        \n        # Pobieramy oryginalne dane pliku\n        original_file = item.binary['pdf_certificate']\n        \n        # Tworzymy nowe pole 'data' z wymuszonymi poprawnymi nagłówkami\n        item.binary['data'] = {\n            \"data\": original_file['data'],    # Kopiujemy samą treść pliku (base64)\n            \"mimeType\": \"application/pdf\",    # WYMUSZAMY typ PDF (to naprawia błąd \"null\")\n            \"fileName\": \"certificate.pdf\",    # Ustawiamy bezpieczną nazwę bez spacji\n            \"fileExtension\": \"pdf\"            # Ustawiamy rozszerzenie\n        }\n\n# Zwracamy naprawione dane do następnego węzła\nreturn _input.all()"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        144
+      ],
+      "id": "b2ce627e-d157-4bca-9d73-91c7623dcbd6",
+      "name": "Code in Python (Beta)"
     }
   ],
   "pinData": {},
@@ -381,7 +388,13 @@
     },
     "Merge": {
       "main": [
-        []
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Create a post": {
@@ -402,20 +415,14 @@
     },
     "Edit Fields": {
       "main": [
-        [
-          {
-            "node": "HTTP Request1",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "If1": {
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Code in Python (Beta)",
             "type": "main",
             "index": 0
           }
@@ -428,13 +435,24 @@
           }
         ]
       ]
+    },
+    "Code in Python (Beta)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "e2ba8167-9d14-4ef3-8112-a275f7b0e83a",
+  "versionId": "e05de54e-028b-4fc0-b80a-878250d8e537",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0431d6780a77a77e1cbc32dfbdc45a2ae4ffb2f14d277670cc504ae89a133c16"

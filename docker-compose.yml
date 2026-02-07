@@ -9,9 +9,12 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
     environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Europe/Warsaw
       - N8N_SECURE_COOKIE=false # Ułatwia pracę na localhost bez HTTPS
-      - N8N_URL=http://localhost:5678/
-      - N8N_EDITOR_BASE_URL=http://localhost:5678/
   browserless:
     image: browserless/chrome:latest
     restart: always
@@ -23,6 +26,19 @@ services:
     image: gotenberg/gotenberg:8
     ports:
       - "3001:3000"
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:2.4.5-ultra-lite
+    container_name: stirling-pdf
+    restart: always
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./stirling-data:/configs
+      - ./logs:/logs
+    environment:
+      - SECURITY_ENABLELOGIN=false
+      - INSTALL_BOOK_AND_ADVANCED_HTML_OPS=false
+      - SYSTEM_DEFAULTLOCALE=en_US
 
 volumes:
   n8n_data:

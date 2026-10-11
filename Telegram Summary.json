@@ -1,0 +1,247 @@
+{
+  "name": "Telegram Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Retrieve persistent static workflow data\nconst staticData = \\$getWorkflowStaticData('global');\nconst lastExecution = staticData.lastExecutionTimestamp || 0;\nconst now = Date.now();\nconst oneDayMs = 24 * 60 * 60 * 1000;\n\n// Default initial lookback: 7 days ago if first run\nconst initialLookback = now - (7 * 24 * 60 * 60 * 1000); \nconst fetchFromTime = lastExecution > 0 ? lastExecution : initialLookback;\n\nif (lastExecution && (now - lastExecution < oneDayMs)) {\n  const hoursLeft = ((oneDayMs - (now - lastExecution)) / (1000 * 60 * 60)).toFixed(2);\n  throw new Error(`Execution blocked: Less than 24 hours since last run. Try again in ${hoursLeft} hours.`);\n}\n\nreturn [{\n  json: {\n    canExecute: true,\n    fetchFromTime: Math.floor(fetchFromTime / 1000), // Convert to Unix Timestamp (seconds)\n    executionTime: now\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        -48
+      ],
+      "id": "167b0150-8efd-463d-b3b7-91651d4379be",
+      "name": "Check 24h Cooldown & Last Execution"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        -48
+      ],
+      "id": "f089f4cf-f1d3-46f0-aae9-4fd0758a6e09",
+      "name": "n8n-nodes-base.manualTrigger"
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot/8919617008:AAHXq_EuLGKVrJLF2vpJwHMhcpTbazXkWx4/getUpdates",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -144,
+        -48
+      ],
+      "id": "91da77d9-0135-4640-b1ca-5a1e30802271",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = \\$input.all();\nconst fetchFromTime = \\$('Code').first().json.fetchFromTime;\nconst targetChannelId = \"-100XXXXXXXXXX\"; // Replace with Source Channel Chat ID\n\nlet cleanedMessages = [];\n\nfor (const item of items) {\n  const result = item.json.result || [];\n  for (const update of result) {\n    const post = update.channel_post || update.message;\n    \n    if (post && String(post.chat.id) === targetChannelId) {\n      if (post.date >= fetchFromTime && post.text) {\n        const sender = post.from ? (post.from.username || post.from.first_name) : 'Channel Post';\n        const dateStr = new Date(post.date * 1000).toISOString();\n        \n        cleanedMessages.push({\n          timestamp: post.date,\n          formattedDate: dateStr,\n          person: sender,\n          text: post.text.trim()\n        });\n      }\n    }\n  }\n}\n\n// Sort chronologically (oldest to newest)\ncleanedMessages.sort((a, b) => a.timestamp - b.timestamp);\n\n// Format as a single clean transcript block\nconst formattedTranscript = cleanedMessages\n  .map(m => `[${m.formattedDate}] ${m.person}: ${m.text}`)\n  .join('\\n');\n\nreturn [{\n  json: {\n    hasMessages: cleanedMessages.length > 0,\n    transcript: formattedTranscript,\n    messageCount: cleanedMessages.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -48
+      ],
+      "id": "a0ebd48f-07bf-4c97-ba27-4f053b7734e0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an expert financial and tech analyst. Analyze the following transcript from a Telegram channel.\n\nINSTRUCTIONS:\n1. Provide a clear, comprehensive summary of discussions related ONLY to crypto, blockchains, and the economy.\n2. Ignore all other topics (e.g., personal life, general talk, politics).\n3. At the end of the summary, list all ignored topics as single hashtag words under a section titled \"Ignored Topics\" (e.g., #private_life, #politics, #sports).\n\nTRANSCRIPT TO ANALYZE:\n{{ $json.transcript }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        304,
+        -48
+      ],
+      "id": "cfbdd8ae-6ec9-4f9d-bf57-12d0293e6cf6",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        240,
+        160
+      ],
+      "id": "c01c0ad9-ad38-4da8-8655-75b0995fe810",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "KJoCoXK2z4BzezBM",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.text || $input.first().json.response;\nconst maxLength = 32000; // Safe threshold under Telegram's limit\nconst chunks = [];\n\nif (text.length <= maxLength) {\n  chunks.push(text);\n} else {\n  let position = 0;\n  while (position < text.length) {\n    let chunk = text.substring(position, position + maxLength);\n    // Break at last newline to avoid breaking mid-sentence\n    let breakPoint = chunk.lastIndexOf('\\n');\n    if (breakPoint > -1 && position + maxLength < text.length) {\n      chunk = chunk.substring(0, breakPoint);\n      position += breakPoint + 1;\n    } else {\n      position += maxLength;\n    }\n    chunks.push(chunk);\n  }\n}\n\nreturn chunks.map((chunk, index) => ({\n  json: {\n    chunkText: chunk,\n    part: index + 1,\n    totalParts: chunks.length\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "758922f7-b2ba-4598-80bc-2541dc5cd58c",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "chatId": "https://t.me/sum_kryptosfera_bot",
+        "text": "={{ $json.chunkText }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        802.125,
+        -48
+      ],
+      "id": "e06edb86-1214-4317-8a98-5435382e95d2",
+      "name": "Send a text message",
+      "webhookId": "e5f870e2-42c0-4964-9cce-8332991eaca3",
+      "credentials": {
+        "telegramApi": {
+          "id": "YLng6kR1DvobTvl7",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst executionTime = $('Code').first().json.executionTime;\n\n// Persist execution time across manual runs\nstaticData.lastExecutionTimestamp = executionTime;\n\nreturn [{\n  json: {\n    status: \"Success\",\n    savedTimestamp: executionTime,\n    dateTime: new Date(executionTime).toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -48
+      ],
+      "id": "ac6c13e7-1196-48f6-84cf-a4891d452ab2",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "n8n-nodes-base.manualTrigger": {
+      "main": [
+        [
+          {
+            "node": "Check 24h Cooldown & Last Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check 24h Cooldown & Last Execution": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "783ed757-0920-45d2-bc77-985c48369d54",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad15d0114e42e8da3d7bf69d5d8ff2abe343ff02e3ac30e6c86e4844d8e4b530"
+  },
+  "nodeGroups": [],
+  "id": "ORhTvxrhoGkB6pJ3",
+  "tags": []
+}
